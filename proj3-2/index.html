@@ -34,17 +34,47 @@
     <p>
       In this project, we fleshed out the rest of our pathtracer with bells and whistles that allow us to render with
       different kinds of materials, like glass with reflection and refraction and microfacet materials, and
-      environmental variables like the depth of field and light. ADD IN MORE AFTER.
+      environmental variables like the depth of field and light. This required looking to physics and understanding
+      the way light interacts with materials, as well as optics and the laws governing all of these interactions.
+      Overall, this was a very rewarding wrap-up to our difficult pathtracer project, and showed us the power of
+      computer graphics.
     </p>
 
     <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
     <p>
-      Materials!
+      First, we started by implementing reflection and refraction. Reflection is straightforward, especially when we
+      work in the object coordinate space. Refraction is more involved because we have to account for both cases of
+      refraction, where light either enters or exits our material. We take care of this succinctly by having one
+      eta parameter which accounts for both cases. Then we use the spherical coordinate Snell's equations to
+      get our wo vector, following its refraction according the Snell's law. The final output is the following.
+    </p>
+
+    <div align="center">
+      <img src="imgs/snell.png" align="middle" width="60%" />
+      <figcaption align="middle">The output vector according to Snell's Law.</figcaption>
+    </div>
+
+    <p>
+      After this, we just need to implement the corresponding BSDF functions for each of our different materials,
+      but only the sample_f since the normal one should have probability 0 of happening.
+      For mirrors, this is straightforward as they just rely on reflection (where we also divide by absolute cosine
+      theta to cancel our the extra cosines). For glass, we implement both the refraction BSDF when there is no
+      total internal reflection (dividing by an extra eta^2 for radiance normalizing b/w entry and exit) and
+      the glass BSDF itself. For this, we use Schlick's approximation to evaluate since it is far easier.
+      We have to randomly choose to either reflect or refract based on Schlick's reflection coefficient R as we
+      can only return one ray direction.
     </p>
 
     <p>
       Here is a sequence of seven images of the spheres being rendered with a max ray depth of 0, 1 2, 3, 4, 5,
-      and 100, with 128 samples per pixel and 4 samples per light.
+      and 100, with 128 samples per pixel and 4 samples per light. We can see the clear effects of each
+      increasing ray depth on the objects that get rendered. At first, only the light due to our central
+      light source appears with depth 1. Then we see the top wall and the walls appear in the mirror,
+      and slightly in our glass with depth 2 (since they can now get reflected). With depth 3, the glass
+      finally becomes rendered since the light rays get a chance to refract inside and bounce out to
+      the viewer. However, the glass sphere still isn't rendered in the mirror since it hasn't had a chance
+      to bounce one more time, which is why it gets rendered with depth 4. After that everything gets more or less
+      rendered.
     </p>
     <div align="center">
       <table style="width=100%">
@@ -84,6 +114,11 @@
 
     <h2 align="middle">Conclusion</h2>
     <p>
+      For this project, we collaborated by splitting up between Part 1 and Part X. This
+      project was fun applying so much math directly to coding, especially for the graphics
+      to work out. Part 1 was especially instructive to see the different parts of the image
+      being rendered only at different ray depth levels, which matches up well with our
+      intuition.
     </p>
 </body>
 
