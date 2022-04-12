@@ -32,88 +32,179 @@
 
   <div class="padded">
     <p>
-
+      In our project, our goal is to be able to represent images with a high dynamic range of intensity values
+      from a bunch of low dynamic range images. This is a classic problem that is widely utilized by modern phones,
+      and our approach should be able to replicate most of the core parts of it in an end-to-end pipeline. We
+      hopefully will even be able to upload our own burst photos and get out HDR images.
     </p>
 
-    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+    <h2 align="middle">Problem Description</h2>
     <p>
-      First, we started by implementing reflection and refraction. Reflection is straightforward, especially when we
-      work in the object coordinate space. Refraction is more involved because we have to account for both cases of
-      refraction, where light either enters or exits our material. We take care of this succinctly by having one
-      eta parameter which accounts for both cases. Then we use the spherical coordinate Snell's equations to
-      get our wo vector, following its refraction according the Snell's law. The final output is the following.
-    </p>
-
-    <div align="center">
-      <img src="imgs/snell.png" align="middle" width="60%" />
-      <figcaption align="middle">The output vector according to Snell's Law.</figcaption>
-    </div>
-
-    <p>
-      After this, we just need to implement the corresponding BSDF functions for each of our different materials,
-      but only the sample_f since the normal one should have probability 0 of happening.
-      For mirrors, this is straightforward as they just rely on reflection (where we also divide by absolute cosine
-      theta to cancel our the extra cosines). For glass, we implement both the refraction BSDF when there is no
-      total internal reflection (dividing by an extra eta^2 for radiance normalizing b/w entry and exit) and
-      the glass BSDF itself. For this, we use Schlick's approximation to evaluate since it is far easier.
-      We have to randomly choose to either reflect or refract based on Schlick's reflection coefficient R as we
-      can only return one ray direction.
+      Whether due to small camera aperture (such as on mobile phones), uneven lighting (such as in extremely bright or
+      dark settings), or other factors, we often end up taking pictures in less-than-ideal light conditions. If
+      evaluated using a single shot, these factors lead to overexposure or underexposure, both of which lead to
+      information loss, noise, and decreased picture quality.
     </p>
 
     <p>
-      Here is a sequence of seven images of the spheres being rendered with a max ray depth of 0, 1 2, 3, 4, 5,
-      and 100, with 128 samples per pixel and 4 samples per light. We can see the clear effects of each
-      increasing ray depth on the objects that get rendered. At first, only the light due to our central
-      light source appears with depth 1. Then we see the top wall and the walls appear in the mirror,
-      and slightly in our glass with depth 2 (since they can now get reflected). With depth 3, the glass
-      finally becomes rendered since the light rays get a chance to refract inside and bounce out to
-      the viewer. However, the glass sphere still isn't rendered in the mirror since it hasn't had a chance
-      to bounce one more time, which is why it gets rendered with depth 4. After that everything gets more or less
-      rendered.
+      Taking good pictures under all lighting conditions has strong commercial and aesthetic motivations. Common
+      solutions to compensate for poor lighting include adding gain and introducing longer exposure times;
+      unfortunately, gain amplifies noise and longer exposure times can introduce blurring [1].
     </p>
-    <div align="center">
-      <table style="width=100%">
-        <tr>
-          <td>
-            <img src="imgs/spheres_0.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 0.</figcaption>
-          </td>
-          <td>
-            <img src="imgs/spheres_1.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 1.</figcaption>
-          </td>
-          <td>
-            <img src="imgs/spheres_2.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 2.</figcaption>
-          </td>
-        </tr>
-        <br>
-        <tr>
-          <td>
-            <img src="imgs/spheres_3.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 3.</figcaption>
-          </td>
-          <td>
-            <img src="imgs/spheres_4.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 4.</figcaption>
-          </td>
-          <td>
-            <img src="imgs/spheres_5.png" align="middle" width="300px" />
-            <figcaption align="middle">Spheres with ray depth 5.</figcaption>
-          </td>
-        </tr>
-      </table>
-      <img src="imgs/spheres_100.png" align="middle" width="75%" />
-      <figcaption align="middle">Spheres with ray depth 100.</figcaption>
-    </div>
 
-    <h2 align="middle">Conclusion</h2>
     <p>
-      For this project, we collaborated by splitting up between Part 1 and Part X. This
-      project was fun applying so much math directly to coding, especially for the graphics
-      to work out. Part 1 was especially instructive to see the different parts of the image
-      being rendered only at different ray depth levels, which matches up well with our
-      intuition.
+      We want to try another solution: high dynamic range (HDR) photography, which involves quickly capturing, aligning,
+      and merging several frames. At a high level, we will implement Debevec’s algorithm to merge multiple photographs
+      taken at various exposures into one, higher dynamic range radiance map. Then, we will convert that map into
+      viewable images and measure performance. Finally, we will then look to implement extensions on our original
+      project that will reduce noise and improve efficiency.
+    </p>
+
+    <h2 align="middle">Goals and Deliverables</h2>
+    <p>
+      We plan to deliver an interactive Jupyter Notebook that walks the user through the different steps of generating
+      HDR images. Our final deliverable can be broken down into the following tasks:
+    </p>
+    <ol>
+      <li>
+        Setup Jupyter Notebook codebase for image processing.
+      </li>
+      <li>
+        Recover radiance map from a collection of images. We will use Debevec’s method in [2] to “fuse the multiple
+        photographs into a single, high dynamic range radiance map whose pixel values are proportional to the true
+        radiance values in the scene”.
+      </li>
+      <li>
+        Convert radiance map into image viewable on a LDR display. We will perform global and local tone mapping
+        following [3].
+      </li>
+      <li>
+        Measure performance using reference images found <a
+          href="http://cs.brown.edu/courses/csci1950-g/results/final/dkendall/images.html">here</a> and display results.
+      </li>
+      <li>
+        Create an end-to-end pipeline for applying our method to pictures we take on our own phones.
+      </li>
+    </ol>
+
+    <p>
+      Once we finish our core codebase, we hope to deliver a number of extensions on top depending on which ones we
+      think will be most valuable for improving how realistic our pictures look. Some ideas here that we are thinking of
+      are the following:
+    </p>
+    <ul>
+      <li>
+        Auto-alignment to fix mis-aligned images which often happens in real world data (See the “Aligning Frames”
+        section of [1]).
+      </li>
+      <li>
+        A fast bilateral filtering optimization to speed up our process from the naive bilateral filtering we’ll
+        implement above. Here is an example reference that we’d follow for <a
+          href="http://cybertron.cg.tu-berlin.de/eitz/bilateral_filtering/index.html">bilateral filtering</a>.
+      </li>
+      <li>
+        Different tone-mappings that will make our method more applicable to different types of images with greater
+        color constancy/corrections.
+      </li>
+      <li>
+        Exposure fusion, a simple way to create a cross-exposure image without needing HDR at all. We will be following
+        [4].
+      </li>
+    </ul>
+    <p>
+      We will pick a few to work on that seem most promising. If time permits, we will also try to implement more parts
+      of [1] that help our final result, or even re-implement that end-to-end pipeline.
+    </p>
+
+    <h2 align="middle">Schedule</h2>
+    <p>
+      Our proposed schedule is the following.
+    </p>
+
+    <p>
+    <ul>
+      <li>
+        Week 1, 4/11 - 4/17
+        <ul>
+          <li>
+            Setup codebase
+          </li>
+        </ul>
+      </li>
+      <li>
+        Week 2, 4/18 - 4/24
+        <ul>
+          <li>
+            Setup codebase
+          </li>
+          <li>
+            Implement Debevec’s algorithm for recovering a radiance map
+          </li>
+          <li>
+            Implement radiance map into viewable image
+          </li>
+          <li>
+            Create pipeline for applying method on our own images
+          </li>
+        </ul>
+      </li>
+      <li>
+        Week 3, 4/25 - 5/1
+        <ul>
+          <li>
+            Implement auto-alignment
+          </li>
+          <li>
+            Implement fast bilateral optimization
+          </li>
+          <li>
+            Implement alternate tone mapping method(s)
+          </li>
+        </ul>
+      </li>
+      <li>
+        Week 4, 5/2 - 5/8
+        <ul>
+          <li>
+            Implement [1], if feasible
+          </li>
+          <li>
+            Implement exposure fusion
+          </li>
+          <li>
+            Polish the final, interactive deliverable
+          </li>
+        </ul>
+      </li>
+    </ul>
+    </p>
+
+    <h2 align="middle">Resources</h2>
+    <p>
+      We will be primarily using Python as our programming language, with the numpy and opencv packages for help. The
+      main papers we will be following are [2] and [3]. We will also reference and potentially implement parts of
+      [1], which was linked in the original specification.
+    </p>
+
+    <p>
+      [1] “<a href="https://static.googleusercontent.com/media/hdrplusdata.org/en//hdrplus.pdf">Burst photography for
+        high dynamic range and low-light imaging on mobile cameras.</a>” Samuel W. Hasinoff, Dillon
+      Sharlet, Ryan Geiss, Andrew Adams, Jonathan T. Barron, Florian Kainz, Jiawen Chen, and Marc Levoy.
+    </p>
+    <p>
+      [2] “<a href="http://www.pauldebevec.com/Research/HDR/debevec-siggraph97.pdf">Recovering High Dynamic Range
+        Radiance Maps from Photographs.</a>” Paul E. Debevec and Jitendra Malik.
+    </p>
+    <p>
+      [3] “<a href="http://people.csail.mit.edu/fredo/PUBLI/Siggraph2002/DurandBilateral.pdf">Fast Bilateral Filtering
+        for the Display of High-Dynamic-Range Images.</a>” Frédo Durand and Julie Dorsey.
+    </p>
+    <p>
+      [4] “<a href="https://mericam.github.io/papers/exposure_fusion_reduced.pdf">Exposure Fusion.</a>” Tom Mertens, Jan
+      Kautz, and Frank Van Reeth.
+    </p>
+    <p>
+      Dataset: ​​https://hdrplusdata.org/
     </p>
 </body>
 
