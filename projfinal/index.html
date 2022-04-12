@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Final Project</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <br />
+  <h1 align="middle">Final Project: Multi-shot High Dynamic Range Imaging</h1>
+  <h2 align="middle">Phoebe Li, Harrison Tin, Tyler Zhu, Christopher Zou</h2>
+
+  <div class="padded">
+    <p>
+
+    </p>
+
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+    <p>
+      First, we started by implementing reflection and refraction. Reflection is straightforward, especially when we
+      work in the object coordinate space. Refraction is more involved because we have to account for both cases of
+      refraction, where light either enters or exits our material. We take care of this succinctly by having one
+      eta parameter which accounts for both cases. Then we use the spherical coordinate Snell's equations to
+      get our wo vector, following its refraction according the Snell's law. The final output is the following.
+    </p>
+
+    <div align="center">
+      <img src="imgs/snell.png" align="middle" width="60%" />
+      <figcaption align="middle">The output vector according to Snell's Law.</figcaption>
+    </div>
+
+    <p>
+      After this, we just need to implement the corresponding BSDF functions for each of our different materials,
+      but only the sample_f since the normal one should have probability 0 of happening.
+      For mirrors, this is straightforward as they just rely on reflection (where we also divide by absolute cosine
+      theta to cancel our the extra cosines). For glass, we implement both the refraction BSDF when there is no
+      total internal reflection (dividing by an extra eta^2 for radiance normalizing b/w entry and exit) and
+      the glass BSDF itself. For this, we use Schlick's approximation to evaluate since it is far easier.
+      We have to randomly choose to either reflect or refract based on Schlick's reflection coefficient R as we
+      can only return one ray direction.
+    </p>
+
+    <p>
+      Here is a sequence of seven images of the spheres being rendered with a max ray depth of 0, 1 2, 3, 4, 5,
+      and 100, with 128 samples per pixel and 4 samples per light. We can see the clear effects of each
+      increasing ray depth on the objects that get rendered. At first, only the light due to our central
+      light source appears with depth 1. Then we see the top wall and the walls appear in the mirror,
+      and slightly in our glass with depth 2 (since they can now get reflected). With depth 3, the glass
+      finally becomes rendered since the light rays get a chance to refract inside and bounce out to
+      the viewer. However, the glass sphere still isn't rendered in the mirror since it hasn't had a chance
+      to bounce one more time, which is why it gets rendered with depth 4. After that everything gets more or less
+      rendered.
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/spheres_0.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 0.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/spheres_1.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 1.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/spheres_2.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 2.</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="imgs/spheres_3.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 3.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/spheres_4.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 4.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/spheres_5.png" align="middle" width="300px" />
+            <figcaption align="middle">Spheres with ray depth 5.</figcaption>
+          </td>
+        </tr>
+      </table>
+      <img src="imgs/spheres_100.png" align="middle" width="75%" />
+      <figcaption align="middle">Spheres with ray depth 100.</figcaption>
+    </div>
+
+    <h2 align="middle">Conclusion</h2>
+    <p>
+      For this project, we collaborated by splitting up between Part 1 and Part X. This
+      project was fun applying so much math directly to coding, especially for the graphics
+      to work out. Part 1 was especially instructive to see the different parts of the image
+      being rendered only at different ray depth levels, which matches up well with our
+      intuition.
+    </p>
+</body>
+
+</html>
