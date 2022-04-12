@@ -111,14 +111,94 @@
       <img src="imgs/spheres_100.png" align="middle" width="75%" />
       <figcaption align="middle">Spheres with ray depth 100.</figcaption>
     </div>
+    <h2 align="middle">Part 2: Microfacets</h2>
+    <p>
+      Here are renderings of the dragon, with alpha values of 0.005, 0.05, 0.25, and 0.5 respectively. We used 256 samples
+      per pixel, 7 bounces, and 480x360 resolution for all of them.
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/dragon-005.png" align="middle" width="300px" />
+            <figcaption align="middle">alpha = 0.005</figcaption>
+          </td>
+          <td>
+            <img src="imgs/dragon-05.png" align="middle" width="300px" />
+            <figcaption align="middle">alpha = 0.05</figcaption>
+          </td>
+          
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="imgs/dragon-25.png" align="middle" width="300px" />
+            <figcaption align="middle">alpha = 0.25</figcaption>
+          </td>
+          <td>
+            <img src="imgs/dragon-50.png" align="middle" width="300px" />
+            <figcaption align="middle">alpha = 0.5</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      As the alpha value increases, the metal of the dragon becomes smoother and less glossy.
+      The alpha value is an indication for how rough a surface is—the distribution of its microfacets. What we are seeing is that with small alpha (smooth surface),
+      light bouncebacks are more concentrated and result in a glossier surface, whereas with large alpha (rough surface)
+      the light is diffused in more different directions, resulting in a smoother viewing experience.
+    </p>
+    <p>
+      Next, here are two images of CBbunny_microfacet_cu.dae, rendered using first cosine sampling
+      then importance sampling. We fixed the sampling rate at 64, with 1 sample per light and again
+      a resolution of 480x360 with 7 bounces.
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/bunny-cosine.png" align="middle" width="300px" />
+            <figcaption align="middle">With cosine sampling</figcaption>
+          </td>
+          <td>
+            <img src="imgs/bunny-importance.png" align="middle" width="300px" />
+            <figcaption align="middle">With importance sampling</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      As you can see, the cosine sampled one has some copper like characteristics, but at the current sampling rate
+      does not actually get to the correct color or material model. What this indicates is that the cosine distribution
+      doesn't match this image very well and takes a long time to converge to the right answer.
+    </p>
+    <p>
+      Finally, we rendered the bunny with parameters as if it were made of chromium. Here were
+      our parameters for eta and k:
+    </p>
+    <ul>
+      <li>eta: 3.1743, 3.1800, 2.4650</li>
+      <li>k: 3.300, 3.3300, 3.2150</li>
+    </ul>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/bunny-chromium.png" align="middle" width="300px" />
+            <figcaption align="middle">Chromium bunny</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
 
     <h2 align="middle">Conclusion</h2>
     <p>
-      For this project, we collaborated by splitting up between Part 1 and Part X. This
-      project was fun applying so much math directly to coding, especially for the graphics
-      to work out. Part 1 was especially instructive to see the different parts of the image
-      being rendered only at different ray depth levels, which matches up well with our
-      intuition.
+      For this project, we collaborated by splitting up between Part 1 and Part 2. This was nice in the sense that the two parts were
+      relatively independent, and we could work in parallel in stead of in series. The project was fun in applying so much math directly to coding and
+      seeing how the graphics could work out. Part 1 was instructive to see the different parts of the image being rendered only at different ray depth
+      levels, which matches up well with our intuition. Part 2 was cool in the sense that we could directly render any glossy or matte surface based
+      on a couple of modifiable parameters. We also had a good time investigating sources of noise - learning about the white dots, or "fireflies" through
+      Piazza and how upsampling could get rid of them was a cool moment.
     </p>
 </body>
 
