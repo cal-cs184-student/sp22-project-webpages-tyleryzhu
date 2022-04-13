@@ -268,6 +268,156 @@
     </div>
 
     <h2 align="middle">Part 5: Shaders</h2>
+    <p>
+      Shader programs run the parts of graphics pipelines that well...for lack of better description color in the pixels. The key part of shader programs is that
+      they tend to run in parallel and in isolation from each other on GPUs. This allows us
+      to use them to render images very quickly compared to using CPUs.
+    </p>
+    <p>
+      We can split shaders up into vertex and fragment shaders. Vertex shaders modify vertices. They 
+      output information about vertices' positions and normals to downstream fragment shaders. Fragment shaders
+      are like pixel analogs. Fragment shaders take what vertex shaders give them and compute colors,
+      textures, and light factors (like materials) to actually color in the fragments.
+    </p>
+    <p>
+      We started our exploration of shaders by looking at Blinn-Phong shading. Blinn-Phong shading is a way
+      to capture specular highlights - really bright mirror spots that occur when light shines on a reflective surface.
+      To do so, we add up our output light from three components. The first is ambient light. The second
+      is a specular reflection component (which relies on measuring how close some light ray and material are to
+      actually being a mirror), as well as a diffuse lighting component. Here are screenshots
+      showing Blinn-Phong outputting the various components:
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-bp-ambient.png" align="middle" width="450px" />
+            <figcaption align="middle">Ambient light only</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-bp-specular.png" align="middle" width="450px" />
+            <figcaption align="middle">Specular term only</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-bp-diffuse.png" align="middle" width="450px" />
+            <figcaption align="middle">Diffuse light only</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-bp-total.png" align="middle" width="450px" />
+            <figcaption align="middle">Entire Blinn-Phong model</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      Here's a screenshot of a custom texture:
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-texture-custom.png" align="middle" width="450px" />
+            <figcaption align="middle">Custom texture</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      Here's a screenshot of bump mapping on the cloth and on the sphere:
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-bump-sphere.png" align="middle" width="450px" />
+            <figcaption align="middle">Sphere, bump mapping</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-bump-cloth.png" align="middle" width="450px" />
+            <figcaption align="middle">Cloth, bump mapping</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      Here's displacement mapping on the sphere: 
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-disp-sphere.png" align="middle" width="450px" />
+            <figcaption align="middle">Sphere, displacement maping</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      Note that we used texture_3.png for all of these renders.
+    </p>
+    <p>
+      Comparing the two approaches, we see that when we use the displacement method,
+      we end up with a noticeably more bulky surface as opposed to a smooth underlying
+      surface. This makes sense, as in the displacement method every vertex is being
+      actually shifted around. Here's how they perform when we change the coarseness:
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-sphere-fine.png" align="middle" width="450px" />
+            <figcaption align="middle">Fine, bump mapping</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-sphere-coarse.png" align="middle" width="450px" />
+            <figcaption align="middle">Coarse, bump mapping</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-sphere-fine-d.png" align="middle" width="450px" />
+            <figcaption align="middle">Fine, displacement mapping</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-sphere-coarse-d.png" align="middle" width="450px" />
+            <figcaption align="middle">Coarse, displacement mapping</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p>
+      As you can see, as the sphere has a finer mesh, the top of the generated images is smoother and
+      more round. Frankly, the difference is very subtle and we are not really sure that the render
+      is noticeably higher or lower quality.
+    </p>
+    <p>
+      Here's a screenshot of our mirror shader:
+    </p>
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/5-sphere-mirror.png" align="middle" width="450px" />
+            <figcaption align="middle">Sphere, mirrored</figcaption>
+          </td>
+          <td>
+            <img src="imgs/5-cloth-mirror.png" align="midd
+            le" width="450px" />
+            <figcaption align="middle">Cloth, mirrored</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
 
 
 </body>
