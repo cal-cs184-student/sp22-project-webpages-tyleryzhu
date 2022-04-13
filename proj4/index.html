@@ -1,7 +1,135 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Cloth Simulator</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <br />
+  <h1 align="middle">Assignment 4: Cloth Simulator</h1>
+  <h2 align="middle">Christopher Zou and Tyler Zhu</h2>
+
+  <div class="padded">
+    <p>
+      In this project, we implemented a cloth simulator. [insert insert]
+    </p>
+
+    <h2 align="middle">Part 1: Masses and Springs</h2>
+    <p>
+      yaaaaaaaaaaaaaa
+    </p>
+
+    <p>
+      Here are the deliverables.
+    </p>
+
+    <div align="center">
+      <img src="imgs/pt1-noshear.png" align="middle" width="60%" />
+      <figcaption align="middle">Wireframe with no shearing.</figcaption>
+    </div>
+    <div align="center">
+      <img src="imgs/pt1-onlyshear.png" align="middle" width="60%" />
+      <figcaption align="middle">Wireframe with only shearing (aliasing!).</figcaption>
+    </div>
+    <div align="center">
+      <img src="imgs/pt1-all.png" align="middle" width="60%" />
+      <figcaption align="middle">Wireframe with all settings (aliasing!)</figcaption>
+    </div>
+
+    <h2 align="middle">Part 2: Simulation via numerical integration</h2>
+
+    <p>
+      For this part, we implemented the core logic of the simulation using Verlet integration.
+    </p>
+
+    <p>
+      For the first deliverable, we experimented with different hyperparameter settings on pinned2.
+      First we set the spring density to a very small value (5) and a huge value (500,000).
+      The first had the effect of introduce large ripples and oscillations that would not settle
+      out due to the low spring constant, which was interesting. The second resulted in this crazy
+      result that you can see where the cloth folds in on itself. It must be because a large spring
+      constant results in more internal tension than gravity can overcome. We also tried
+      setting a more reasonable value (like 50,000) and it simply falls down directly without
+      rippling much.
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/pt2-lowks.png" align="middle" width="500px" />
+            <figcaption align="middle">Cloth with ks=5.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt2-hugeks.png" align="middle" width="500px" />
+            <figcaption align="middle">Cloth with ks = 500,000.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      We did the same thing for density, setting it to a small value like 5 and a large one like
+      100. It had the effect of pulling the cloth together tighter and letting it hang or droop
+      more/less. For lower values, the cloth sagged less, while larger values sagged much more
+      and had less ripples.
+    </p>
+
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/pt2-lowdense.png" align="middle" width="500px" />
+            <figcaption align="middle">Cloth with density=5.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt2-highdense.png" align="middle" width="500px" />
+            <figcaption align="middle">Cloth with density= 100.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div align="center">
+      <img src="imgs/pt2-pinned4.png" align="middle" width="60%" />
+      <figcaption align="middle">Final resting state of pinned4.</figcaption>
+    </div>
+
+    <h2 align="middle">Part 3: Handling collisions with other objects</h2>
+
+
+    <h2 align="middle">Part 4: Handling self-collisions</h2>
+
+
+    <h2 align="middle">Part 5: Shaders</h2>
+
+
+    <h2 align="middle">Conclusion</h2>
+    <p>
+      For this project,
+    </p>
+</body>
+
 </html>
