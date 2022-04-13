@@ -32,12 +32,26 @@
 
   <div class="padded">
     <p>
-      In this project, we implemented a cloth simulator. [insert insert]
+      In this project, we implemented a cloth simulator using a spring and mass system with
+      physics based simulation rules. We were able to simulate a piece of cloth falling and
+      draping over a sphere, as well as a piece of cloth folding on itself on a plane. Finally,
+      we were able to implement different types of shaders that reflect different types of
+      surfaces and utilize those in our simulator.
     </p>
 
     <h2 align="middle">Part 1: Masses and Springs</h2>
     <p>
-      yaaaaaaaaaaaaaa
+      In this part, we set up the core system with which we will make our cloth simulator
+      out of. We will use a spring and mass system, which starts with an evenly spaced
+      grid of masses. Like most people probably, we didn't correctly store the point masses
+      in row-major order the first time we did this. We only found out in part 3, and had
+      to come back to fix it.
+    </p>
+
+    <p>
+      Once we have that, we just needed to designate certain point masses as pinned and
+      then add springs to to our mesh that represent the different types of constraints,
+      i.e. structural, shearing, and bending constraints.
     </p>
 
     <p>
@@ -112,6 +126,11 @@
       </table>
     </div>
 
+    <p>
+      Finally, for damping, it simply slowed the speed at which our simulation iterates. Here is
+      our resting state for pinned4.
+    </p>
+
     <div align="center">
       <img src="imgs/pt2-pinned4.png" align="middle" width="60%" />
       <figcaption align="middle">Final resting state of pinned4.</figcaption>
@@ -119,17 +138,138 @@
 
     <h2 align="middle">Part 3: Handling collisions with other objects</h2>
 
+    <p>
+      In this part, we add support for cloth collisions with other objects like spheres and planes.
+      This will allow us to see how our cloth interacts with other surfaces and drop a cloth on it.
+    </p>
+
+    <p>
+      The main issue we need to address is points which clip into our surfaces. For each point,
+      we first determine if this is the case. If so, our gameplan occurs in three main steps:
+    <ul>
+      <li>
+        First find where the point would have intersected the surface of our object between
+        the last position and the current one. Call this the tangent point.
+      </li>
+      <li>
+        Find the correction vector we need to apply to our last position to get to the tangent point.
+        For planes, we bump our vector back slightly.
+      </li>
+      <li>
+        The point's new position is its last position adjusted by the above correction vector,
+        accounting for friction (i.e. dividing by 1-f).
+      </li>
+      Here we show our results from sphere using ks = 500, 5000, and 50000.
+    </ul>
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/pt3-ks500.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth with ks=500 on sphere.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt3-ks5000.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth with ks=5000 on sphere.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt3-ks50000.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth with ks=50000 on sphere.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      Here we can see that the value of ks controls how stiff the cloth is. When it
+      is low, the cloth falls much more than when it is higher. It stiffens up and
+      doesn't fall as low or bunch up as easily (like silk vs. paper).
+      Finally, here is our cloth resting on the plane.
+    </p>
+
+    <div align="center">
+      <img src="imgs/pt3-plane.png" align="middle" width="60%" />
+      <figcaption align="middle">Cloth resting on a plane.</figcaption>
+    </div>
 
     <h2 align="middle">Part 4: Handling self-collisions</h2>
+    <p>
+      In this part, we tackle self-collisions in our cloth. This is necessary since
+      the point masses in our cloth won't realize they're running into each other
+      and make our cloth clip through itself. To fix this, we could iterate over
+      all pairs of points and repel them if they come too close, but we instead
+      utilize spatial hashing in order to create a faster solution.
+    </p>
 
+    <p>
+      For this, at every timestep we create a hash table that maps all the point
+      masses which are in the same small 3D box volume to the same float. This
+      partitions the space into these small 3D boxes which represent spatial
+      locality. For our purposes, since the values never exceeded around 20, we chose
+      a prime number like 29 and mapped the 3 integers to w*29^2 + h*29 + t.
+    </p>
+
+    <p>
+      Then we made sure to rebuild this hash table at every time step and then
+      iterate over all our point masses, check for nearby points that are too close
+      (i.e. within 2 * thickness distance apart), and if so repel them away from
+      each other. One nasty bug we had was not accounting for the case when the
+      number of nearby point masses was 0, and still dividing by this. This
+      resulted in the point masses turning into NaNs, which was a non-obvious bug
+      to track down.
+    </p>
+
+    <p>
+      Here are three screenshots showing our cloth at three progressive
+      steps throughout the process.
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/pt4-cloth0.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth falling at first.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt4-cloth1.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth falling in the middle.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt4-cloth2.png" align="middle" width="300px" />
+            <figcaption align="middle">Cloth falling at the end.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      Finally we also tested different densities and ks values. We noticed that as density
+      decreases, the cloth tends to flow more (and same in the other direction), while
+      as we increase ks, the cloth tends to be stiffer (and same vice versa). This holds up
+      with observations found in previous parts for when we vary these
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/pt4-ks50000.png" align="middle" width="450px" />
+            <figcaption align="middle">Cloth falling with ks=50,000.</figcaption>
+          </td>
+          <td>
+            <img src="imgs/pt4-dense5.png" align="middle" width="450px" />
+            <figcaption align="middle">Cloth falling with density=5.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
 
     <h2 align="middle">Part 5: Shaders</h2>
 
 
-    <h2 align="middle">Conclusion</h2>
-    <p>
-      For this project,
-    </p>
 </body>
 
 </html>
