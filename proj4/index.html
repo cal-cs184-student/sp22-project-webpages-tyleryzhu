@@ -75,6 +75,13 @@
 
     <p>
       For this part, we implemented the core logic of the simulation using Verlet integration.
+      We are integrating the physics based models into our simulation. For every time step,
+      we first find all of the external forces on each point mass based on the external acceleration.
+      Then we follow Hooke's law to find the forces from each spring. Once we have all the
+      forces, we can compute the acceleration and use Verlet integration with a damping term
+      to find the next timestep. Finally, we also make sure to constrain position updates
+      based on the 1995 Provot paper, making sure that each spring's length is no more than 10%
+      of its rest_length at any timestep.
     </p>
 
     <p>
