@@ -1,0 +1,96 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Final Project Milestone Deliverables</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <br />
+  <h1 align="middle">Final Project: Multi-shot High Dynamic Range Imaging</h1>
+  <h2 align="middle">Phoebe Li, Harrison Tin, Tyler Zhu, Christopher Zou</h2>
+
+  <div class="padded">
+    <h2 align="middle">Deliverables</h2>
+    <li>
+      <a href="https://docs.google.com/presentation/d/1RzsVg_-13LaPM6meqwA9Sn8KJD5d8yAV1LeYnAT1Njc/edit?usp=sharing">Slides</a>
+    </li>
+    <li>
+      <a href="">Video recording</a>
+    </li>
+
+    <h2 align="middle">Progress So Far</h2>
+    <p>
+      We split our progress into two main parts. The first is radiance mapping and the second is tone mapping.
+    </p>
+
+    <h3 align="middle">Radiance Map Reconstruction (Debevec)</h3>
+    <p>
+      In this section, we implemented Debevec’s Algorithm to “fuse the multiple photographs into a single, high dynamic range radiance map whose pixel values are proportional to the true radiance values in the scene”. There are three functions for the Debevec’s Algorithm: <code>response_function</code> for sampling the pixels from images with different exposure times, <code>response_function_solver</code> for finding the response curve and <code>construct_radiance_map</code> for constructing the radiance map from the response curves.</p>
+<p>In <code>response_function</code>, we set up the parameters we need for <code>response_function_solver</code>. The <code>ln_t</code> is the log shutter speed in Equation (2). The <code>l</code> is the lambda constant to determine the smoothness. The <code>w</code> is the weighting function to “emphasize the smoothness and fitting terms toward the middle of the curve”. The <code>Z</code> is a 2D array storing the pixel values of all images. We sample <code>num_samples * num_samples</code> pixels equally across each image. Now we can call <code>response_function_solver</code> to solve the response function.</p>
+In <code>response_function_solver</code>, we followed the Matlab implementation in the paper to solve the linear system that minimize the objective function O in Equation (3). Because it is quadratic in the Ei and g(z)’s, minimizing O is a linear least square problem which can be solved using singular value decomposition (SVD). The function returns the log exposure corresponding to pixel z in Equation (2).</p>
+<p>In <code>construct_radiance_map</code>, we calculate the radiance value at each pixel according to Equation (6), where <code>g</code> is the function returned by
+<code>response_function</code>, and <code>w</code> is the weighting function
+described by Equation (4). We return the radiance map as a 2D-array with the same dimensions as the original image.
+    </p>
+
+
+    <h3 align="middle">Local Tone Mapping (Durand)</h3>
+    <p>
+      In this section, we implemented local tone mapping to be able to show off our image cleanly. The idea behind the tone map is to take
+      a high dynamic range and map it to the limited range of the screen, but take advantage of the entire range of the screen.
+    </p>
+
+    <p>
+      We implemented this mostly through a single function called <code>local_tone_mapping</code>. This function takes in a radiance map and a given dynamic range and returns
+      the tone mapped image. Our steps are to:
+    </p>
+    <ol>
+      <li>Calculate the intensity by averaging channels.</li>
+      <li>Compute chrominance channels.</li>
+      <li>Calculate the log intensity of the pixels, controlling for potential zeroes.</li>
+      <li>Apply a bilateral filter. Note that this bilateral filter is currently implemented using a built-in library function. We may reimplement this function later on.</li>
+      <li>Compute the difference between the log intensity and the bilateral filtering as the detail layer</li>
+      <li>Scale it to the given dynamic range using max-min normalization and redo the log intensity</li>
+      <li>Use the chrominance channels to add back the colors</li>
+      <li>Take the square root of everything in order to lighten the image</li>
+    </ol>
+
+    <p>
+      So far, we are able to tone map images and see a small but meaningful difference in viewing quality. You can see more on the slides.
+    </p>
+    <h2 align="middle">Progress Relative to Plan</h2>
+    <p>
+      In our original plan, we planned to set up our codebase, implement Debevec's algorithm, and implement a way to turn
+      a radiance map into viewables images. The only part of our Week 2 plan we did not completely finish was creating a pipeline for applying
+      this method on our own images. However, this pipeline is basically coded up; we just need to figure out a few debugging areas
+      and make it easier to specify program arguments instead of hardcoding image paths.
+    </p>
+
+    <p>
+      As a result, we will update our plan to finish the pipeline in Week 3. Everything else will remain the same.
+    </p>
+
+</body>
+
+</html>
