@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Final Project Report</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+<body>
+  <br />
+  <h1 align="middle">Final Project: Multi-shot High Dynamic Range Imaging</h1>
+  <h2 align="middle">Phoebe Li, Harrison Tin, Tyler Zhu, Christopher Zou</h2>
+
+  <div class="padded">
+    <h2 align="middle">Abstract</h2>
+
+    <p>
+      Whether due to small camera aperture (such as on mobile phones), uneven lighting (such as in extremely bright or dark settings), or other factors, we often end up taking pictures in less-than-ideal light conditions. If evaluated using a single shot, these factors lead to overexposure or underexposure, both of which lead to information loss, noise, and decreased picture quality. 
+
+Taking good pictures under all lighting conditions has strong commercial and aesthetic motivations. Common solutions to compensate for poor lighting include adding gain and introducing longer exposure times; unfortunately, gain amplifies noise and longer exposure times can introduce blurring. 
+
+Here we present another solution: high dynamic range (HDR) photography. We capture, align, and merge several frames, implementing work from Debevec [1] to construct a radiance map out of photographs at various exposures and implementing work from Levoy [2] to align images. Finally, we implement Durand’s 2002 [3] paper on tone mapping to convert the radiance map to a viewable image on screen.
+    </p>
+    <h2 align="middle">Technical Approach</h2>
+
+    <p>
+      Our overall algorithm is as follows:
+<ol>
+<li>Load images and exposure times according to a text file</li>
+<li>[Optional] If images are too large, downscale them</li>
+<li>Auto-align images</li>
+<li>Construct HDR image with radiance mapping</li>
+<li>Construct LDR image with tone mapping</li>
+<li>Display and save final result</li>
+</ol>
+
+    </p>
+
+
+    <h3 align="middle">Radiance Map Reconstruction</h3>
+
+    <p>
+      First, we implemented the algorithms outlined in Debevec and Malik’s paper to fuse multiple photographs into a single, high dynamic range radiance map, whose pixel values are proportional to the radiance values in the scene. We broke this process down into the following functions: 
+    </p>
+    <p>
+      <code>construct_hdr_image</code> is the highest level function that takes in a sequence of color images and their corresponding exposure times, and returns the final hdr image. It first separates the image data into each of the three color channels (B, G, and R). It then constructs the radiance map for each single-channel image sequence by calling <code>construct_radiance_map</code>. Lastly, it concatenates the 3 image radiance maps, which are 2D arrays, into one 3D array and returns it. 
+    </p>
+    <p>
+      <code>construct_radiance_map</code> returns the radiance map for a sequence of images with a single color channel. It constructs a “weighting function” that peaks at the average pixel value, as well as a response function by calling <code>response_function</code> on the image and exposure input. It uses these two functions to calculate the log radiance value at each pixel in the image (Equation 6 in paper). 
+    </p>
+    <p>
+      <code>response_function</code> and <code>response_function_solver</code> work together to return the response function of the given image sequence by calculating the response value at each pixel. More specifically, <code>response_function</code>, sets up the parameters needed for <code>response_function_solver</code>, where <code>ln_t</code> is the log shutter speed in Equation (2), <code>l</code> is the lambda constant to determine the smoothness, <code>w</code> is the weighting function to “emphasize the smoothness and fitting terms toward the middle of the curve”, and <code>Z</code> is a 2D array storing the pixel values of all images. We sample <code>num_samples * num_samples</code> pixels in each image and lastly call <code>response_function_solver</code>. This function follows the Matlab implementation in the paper to solve the linear system that minimizes the objective function O in Equation (3). Because it is quadratic in the Ei and g(z)’s, minimizing O is a linear least square problem which can be solved using singular value decomposition (SVD). The function returns the log exposure corresponding to pixel z in Equation (2).
+    </p>
+
+    <p>
+      <i>Problems tackled and lessons learned:</i>
+    </p>
+
+    <p>
+      Comprehending the algorithms outlined in the academic paper was quite difficult. It took several reads and additional googling to begin the implementation process. We also found and took inspiration from <a href=”http://cs.brown.edu/courses/cs129/asgn/proj2_hdr/index.html”>Brown University’s HDR project spec</a> to help give us an idea of what functions to write. The spec also described some of the concepts in the paper more simply. Because this was the first thing my team implemented, we did not have an image processing pipeline built out yet, so we had to build that out first. After implementing radiance mapping, we were able to use the image sequence in the paper and compare our results directly to Debevec’s. For other image sequences (the water bottle one, taken by Harrison), we were able to verify our results by comparing our final images to those generated by opencv’s own hdr function. 
+    </p>
+
+    <h3 align="middle">Tone Mapping</h3>
+    <p>
+      We implemented local tone mapping to be able to show off our image cleanly. The idea behind the tone mapping is to take a radiance map and convert it to the limited dynamic range of the screen. 
+
+Following Durand’s 2002 paper, we implemented this mostly through a single function called <code>local_tone_mapping</code>. This function takes in a radiance map and a given dynamic range and returns the tone mapped image. Here are our basic steps:
+<ol>
+<li>Calculate the intensity of the image by averaging the color channels.</li>
+<li>Calculate the chrominance channels by dividing each color channel by intensity.</li>
+<li>Calculate the log intensity of thep pixels, controlling for potential 0 values.</li>
+<li>Apply a bilateral filter. We use OpenCV’s built-in library function.</li>
+<li>Compute the difference between the log intensity and the filtered intensity and store it as the detail layer.</li>
+<li>Scale the log intensity to the given dynamic range using min-max normalization and add the detail layer.</li>
+<li>Exponentiate to return from log intensity to intensity.</li>
+<li>Use the chrominance channels to add back the colors.</li>
+<li>Apply gamma compression, global tone mapping, and rescaling as needed.</li>
+</ol>
+    </p>
+
+    <p>
+      <i>Problems tackled and lessons learned:</i>
+    </p>
+
+    <p>
+      We had a few problems that we had to work out when introducing tone mapping. The first was optimizing the result for our display. Oftentimes we could use simple concave functions like x/(x+1) or ln(x) to stretch the contrast in certain dark areas better, but oftentimes we had to try other choices or try combining with gamma compression using tuned values for the exponent in cases where the light was dominant (like the streetlight example). This helped us better differentiate the results for different values of dynamic range and gamma so that the tone mapping gave us better results. 
+    </p>
+
+    <p>
+      We also had a recurring bug with the lightness of our pictures. After using tone mapping, our results on the memorial images were lacking in contrast, and even after looking at the S-curve and response curves we couldn’t find a satisfactory method to address this. 
+    </p>
+    
+    <h3 align="middle">Auto-Alignment</h3>
+    <p>
+      In this section, we implemented the auto alignment to align and crop a list of images before constructing the radiance map. The basic idea is to recursively blur and shrink the images into smaller size, then calculate the alignment score based on the sum of squared differences of light intensities of two images and find the offset that best align two images.
+    </p>
+
+    <p>
+      We implemented the algorithm inside the function <code>multi_scale_align</code> with two helper functions <code>pyramid_find_offset</code> and <code>single_scale_align</code>. 
+    </p>
+
+    <p>
+      Here are the steps for  <code>multi_scale_align</code>:
+<ol>
+<li>Given a list of images, convert them into grayscale images and call <code>pyramid_find_offset</code> to find the offset to shift for each image (except for the anchor image). </li>
+<li> Use <code>np.roll</code> to shift the image array in both x, y directions </li>
+<li> Crop each image with the maximum offset so they all have the same dimensions</li>
+</ol>
+
+    </p>
+
+    <p>
+      Here are the steps for  <code>pyraid_find_offset</code>:
+<ol>
+<li>Recursively blur and shrink the images until its dimension is smaller than 150x150 pixels </li>
+<li>Call <code>single_scale_align</code> to align each image based on the anchor image and keep track of the offset</li>
+<li> With each new offset, we give it a new range to a bigger image for a better offset in <code>single_scale_align</code> </li>
+<li> Return the best offsets for each images </li>
+</ol>
+
+    </p>
+
+    <p>
+      Here are the steps for  <code>scale_scale_align</code>:
+<ol>
+<li>Apply the Sobel edge detection to both the anchor image and the image we want to align using built in Scipy function <code> ndimage.sobel</code> </li>
+<li>Given a range of offsets in both x and y directions, we exhastively search through all possible displacement and calcuate the alignment score using the sum of squared differences between the anchor image and the image that we shifted </li>
+<li> Return the offset that gives the minimum alignment score </li></ol>
+
+    </p>
+
+    <p>
+      <i>Problems tackled and lessons learned:</i>
+    </p>
+
+    <p>
+      At first, our auto alignment does not give us a good result when we passed in a list of same images with different exposure times because it is hard to get the same range of color intensities in both bright and dark images. One problem we had in our implementation was that we used the brightest image as the anchor image so we compare the color intensities of all images with the brightest image. This results in bad alignment in the darker images. Instead, we chose the median image as our anchor image assuming the list of images is sorted based on light intensities. This gives a better alignment in general. Also, we took inspiration from <a href=”http://cs.brown.edu/courses/cs129/results/proj1/rkuppig/”>Image Alignment project spec by Brown University</a> to use edge detection so that instead of comparing the color intensities, we compare the change of light intensity which gives a much better results when the input has a higher range of intensity.
+    </p>
+
+
+
+    <h2 align="middle">Results</h2>
+
+    <p>
+      We first present our overall results on stock images. To the left, we show the exposure range (in the <code>.txt</code> file) and images that were combined into the results on the right. We
+      compare the result of our code with using OpenCV's built-in radiance map and tone mapping functions.
+      As mentioned, our implementation looks relatively bright.
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/memorial-church.png" align="middle" width="500px" />
+            <figcaption align="middle"></figcaption>
+          </td>
+          <td>
+            <img src="imgs/overall-results.png" align="middle" width="500px" />
+            <figcaption align="middle"></figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>
+      Next, we present results from smartphone pictures we took of a bottle.
+    </p>
+
+    <div align="center">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="imgs/bottle-setup.png" align="middle" width="500px" />
+            <figcaption align="middle"></figcaption>
+          </td>
+          <td>
+            <img src="imgs/bottle-results.png" align="middle" width="500px" />
+            <figcaption align="middle"></figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <h2 align="middle">References:</h2>
+    <ol>
+      <li><a href="http://www.pauldebevec.com/Research/HDR/debevec-siggraph97.pdf">Debevec et al., 1997</a></li>
+      <li><a href="https://static.googleusercontent.com/media/hdrplusdata.org/en//hdrplus.pdf">Levoy et al., 2016</a></li>
+      <li><a href="http://people.csail.mit.edu/fredo/PUBLI/Siggraph2002/DurandBilateral.pdf">Durand etc al.</a></li>
+    </ol>
+
+    <h2 align="middle">Contributions:</h2>
+
+    <p>
+      Phoebe: <ul>
+        <li>Implemented input processing and image downscaling.</li>
+        <li>Implemented construct_hdr_image and construct_radiance_map.</li>
+        <li>Helped implement auto alignment.</li>
+        </ul>        
+    </p>
+    <p>
+      Harrison: <ul>
+        <li>Implemented the response_function and response_function_solver for radiance map reconstruction.</li>
+        <li> Implemented auto alignment.</li>
+        <li> Took sample pictures to collect as our own data for testing purposes on our end-to-end pipeline.</li>
+        </ul>        
+    </p>
+    <p>
+      Chris: <ul>
+        <li>Worked on the tone mapping pipeline.</li>
+        <li>Investigated different types of local tone maps.</li>
+        <li>Prepared videos and websites for deliverables.</Li>
+      </ul>
+    </p>
+    <p>
+      Tyler: <ul>
+        <li>Set up the initial code framework.</li>
+        <li>Worked on the tone mapping pipeline.</li>
+        <li>Investigated different types of local and global tone maps.</li>
+      </ul>
+    </p>
+
+
+</body>
+
+</html>
